@@ -1,0 +1,59 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                deleteDir()
+            }
+        }
+        
+        stage('Clone Git Repository') {
+            steps {
+                git branch: 'main', credentialsId: 'FENZ01', url: 'https://github.com/FENZ01/projet-Devops.git'
+            }
+        }
+
+        stage('Clean Existing Docker Container') {
+            steps {
+                script {
+                    // Stop et supprime le conteneur myapp s'il existe
+                    sh '''
+                    if [ $(docker ps -a -q -f name=myapp) ]; then
+                      docker stop myapp
+                      docker rm myapp
+                    fi
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    writeFile file: 'Dockerfile', text: '''
+                        FROM ubuntu:latest
+                        RUN apt-get update && apt-get install -y apache2 net-tools iproute2 iputils-ping nano ssh
+                        COPY . /var/www/html
+                        EXPOSE 80
+                        CMD ["apachectl", "-D", "FOREGROUND"]
+                    '''
+                    sh 'docker build -t myapache-image .'
+                }
+            }
+        }
+
+        stage('Deploy Docker Container') {
+            steps {
+                script {
+                    // Lance le conteneur myapp sur le port 8088 (host) vers 80 (container)
+                    sh 'docker run -d --name myapp -p 8088:80 myapache-image'
+
+                    // Récupère l'IP du conteneur
+                    def containerIp = sh(script: "docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' myapp", returnStdout: true).trim()
+                    echo "L'adresse IP du conteneur myapp est : ${containerIp}"
+                }
+            }
+        }
+    }
+}
