@@ -47,7 +47,7 @@ pipeline {
             steps {
                 script {
                     // Lance le conteneur myapp sur le port 8088 (host) vers 80 (container)
-                    sh 'docker run -d --name myapp -p 80:8088 myapache-image'
+                    sh 'docker run -d --name myapp -p 8088:80 myapache-image'
 
                     // Récupère l'IP du conteneur
                     def containerIp = sh(script: "docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' myapp", returnStdout: true).trim()
