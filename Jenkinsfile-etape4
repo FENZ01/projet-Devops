@@ -32,7 +32,7 @@ pipeline {
             steps {
                 script {
                     writeFile file: 'Dockerfile', text: '''
-                        FROM ubuntu:apache2
+                        FROM ubuntu/apache2
                         RUN apt-get update && apt-get install -y apache2 net-tools iproute2 iputils-ping nano ssh
                         COPY . /var/www/html
                         EXPOSE 80
